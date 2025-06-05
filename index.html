@@ -1,0 +1,149 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Admin - Dashboard Kuis</title>
+  <style>
+    body { font-family: Arial; padding: 20px; max-width: 800px; margin: auto; background: #f8f9fa; }
+    h1, h2 { text-align: center; }
+    input, button, select { width: 100%; padding: 10px; margin: 8px 0; border-radius: 8px; border: 1px solid #ccc; }
+    button { background-color: #007bff; color: white; }
+    button:hover { background-color: #0056b3; }
+    .card { background: white; padding: 20px; margin: 20px 0; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+    ul { padding-left: 20px; }
+    .soal-item { display: flex; justify-content: space-between; align-items: center; }
+    .soal-item button { margin-left: 5px; width: auto; padding: 5px 10px; font-size: 12px; }
+  </style>
+</head>
+<body>
+  <h1>📊 Admin - Dashboard Kuis</h1>
+
+  <div class="card">
+    <h2>📌 Menu Navigasi</h2>
+    <button onclick="tampilkanBagian('buat-soal')">📝 Buat/Edit Soal</button>
+    <button onclick="tampilkanBagian('peserta')">👥 Daftar Peserta</button>
+    <button onclick="tampilkanBagian('rekap')">✅ Rekap Jawaban Benar</button>
+  </div>
+
+  <div id="buat-soal" class="card">
+    <h2>📝 Buat / Edit Soal</h2>
+    <input type="text" id="pertanyaan" placeholder="Masukkan pertanyaan">
+    <input type="text" id="jawaban" placeholder="Masukkan jawaban benar">
+    <button onclick="simpanSoal()">+ Simpan Soal</button>
+    <ul id="daftar-soal"></ul>
+  </div>
+
+  <div id="peserta" class="card" style="display:none;">
+    <h2>👥 Tambah Peserta</h2>
+    <input type="text" id="nama-peserta" placeholder="Nama siswa">
+    <button onclick="tambahPeserta()">+ Tambah Peserta</button>
+    <ul id="daftar-peserta"></ul>
+  </div>
+
+  <div id="rekap" class="card" style="display:none;">
+    <h2>✅ Siswa yang Menjawab Benar</h2>
+    <ul id="daftar-jawaban-benar"></ul>
+  </div>
+
+  <script>
+    let soal = JSON.parse(localStorage.getItem('daftarSoal')) || [];
+    let peserta = JSON.parse(localStorage.getItem('daftarPeserta')) || [];
+    let hasil = JSON.parse(localStorage.getItem('rekapJawaban')) || {};
+
+    function tampilkanBagian(id) {
+      document.getElementById('buat-soal').style.display = 'none';
+      document.getElementById('peserta').style.display = 'none';
+      document.getElementById('rekap').style.display = 'none';
+      document.getElementById(id).style.display = 'block';
+      if (id === 'rekap') tampilkanRekap();
+    }
+
+    function simpanSoal() {
+      const p = document.getElementById('pertanyaan').value.trim();
+      const j = document.getElementById('jawaban').value.trim();
+      if (p && j) {
+        soal.push({ pertanyaan: p, jawaban: j });
+        localStorage.setItem('daftarSoal', JSON.stringify(soal));
+        document.getElementById('pertanyaan').value = '';
+        document.getElementById('jawaban').value = '';
+        tampilkanSoal();
+      }
+    }
+
+    function editSoal(index) {
+      const item = soal[index];
+      document.getElementById('pertanyaan').value = item.pertanyaan;
+      document.getElementById('jawaban').value = item.jawaban;
+      soal.splice(index, 1);
+      tampilkanSoal();
+    }
+
+    function hapusSoal(index) {
+      soal.splice(index, 1);
+      localStorage.setItem('daftarSoal', JSON.stringify(soal));
+      tampilkanSoal();
+    }
+
+    function tampilkanSoal() {
+      const ul = document.getElementById('daftar-soal');
+      ul.innerHTML = '';
+      soal.forEach((s, i) => {
+        const li = document.createElement('li');
+        li.className = 'soal-item';
+        li.innerHTML = `${i + 1}. ${s.pertanyaan}
+          <span>
+            <button onclick="editSoal(${i})">Edit</button>
+            <button onclick="hapusSoal(${i})">Hapus</button>
+          </span>`;
+        ul.appendChild(li);
+      });
+    }
+
+    function tambahPeserta() {
+      const nama = document.getElementById('nama-peserta').value.trim();
+      if (nama && !peserta.includes(nama)) {
+        peserta.push(nama);
+        localStorage.setItem('daftarPeserta', JSON.stringify(peserta));
+        document.getElementById('nama-peserta').value = '';
+        tampilkanPeserta();
+      }
+    }
+
+    function hapusPeserta(index) {
+      if (confirm('Yakin ingin menghapus peserta ini?')) {
+        peserta.splice(index, 1);
+        localStorage.setItem('daftarPeserta', JSON.stringify(peserta));
+        tampilkanPeserta();
+      }
+    }
+
+    function tampilkanPeserta() {
+      const ul = document.getElementById('daftar-peserta');
+      ul.innerHTML = '';
+      peserta.forEach((n, i) => {
+        const li = document.createElement('li');
+        li.innerHTML = `${i + 1}. ${n} <button onclick="hapusPeserta(${i})" style="background:#dc3545;color:white;border:none;padding:5px 10px;margin-left:10px;border-radius:6px;">Hapus</button>`;
+        ul.appendChild(li);
+      });
+    }
+
+    function tampilkanRekap() {
+      const ul = document.getElementById('daftar-jawaban-benar');
+      ul.innerHTML = '';
+      const entries = Object.entries(hasil);
+      if (entries.length === 0) {
+        ul.innerHTML = '<li>Belum ada yang menjawab.</li>';
+        return;
+      }
+      entries.forEach(([nama, skor]) => {
+        const li = document.createElement('li');
+        li.textContent = `${nama} menjawab benar ${skor} soal`;
+        ul.appendChild(li);
+      });
+    }
+
+    tampilkanSoal();
+    tampilkanPeserta();
+  </script>
+</body>
+</html>

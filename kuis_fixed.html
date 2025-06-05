@@ -1,0 +1,91 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+  <meta charset="UTF-8">
+  <title>Kuis Siswa</title>
+  <style>
+    body { font-family: Arial; padding: 20px; max-width: 700px; margin: auto; background: #f2f2f2; }
+    .card { background: white; padding: 20px; margin-top: 20px; border-radius: 12px; box-shadow: 0 4px 8px rgba(0,0,0,0.1); }
+    input, button, select { width: 100%; padding: 10px; margin: 10px 0; border-radius: 8px; border: 1px solid #ccc; }
+    button { background-color: #28a745; color: white; }
+    button:hover { background-color: #218838; }
+    #hasil { font-weight: bold; font-size: 1.2em; margin-top: 10px; }
+  </style>
+</head>
+<body>
+  <h1>🧑‍🎓 Kuis Siswa</h1>
+
+  <div class="card">
+    <h2>Pilih Peserta</h2>
+    <select id="pilih-peserta"></select>
+    <button onclick="mulaiKuis()">Mulai Kuis</button>
+  </div>
+
+  <div class="card" id="kuis-box" style="display:none;">
+    <p id="soal"></p>
+    <input type="text" id="jawaban" placeholder="Tulis jawabanmu di sini">
+    <button onclick="cekJawaban()">Kirim Jawaban</button>
+    <p id="hasil"></p>
+  </div>
+
+  <script>
+    let soal = JSON.parse(localStorage.getItem('daftarSoal')) || [];
+    let peserta = JSON.parse(localStorage.getItem('daftarPeserta')) || [];
+    let rekap = JSON.parse(localStorage.getItem('rekapJawaban')) || {};
+    let indeks = 0;
+    let namaPeserta = '';
+    let skor = 0;
+
+    function muatPeserta() {
+      const select = document.getElementById('pilih-peserta');
+      select.innerHTML = '';
+      peserta.forEach(n => {
+        const opt = document.createElement('option');
+        opt.value = n;
+        opt.textContent = n;
+        select.appendChild(opt);
+      });
+    }
+
+    function mulaiKuis() {
+      namaPeserta = document.getElementById('pilih-peserta').value;
+      if (!namaPeserta) return alert('Pilih nama peserta dulu!');
+      document.querySelector('.card').style.display = 'none';
+      document.getElementById('kuis-box').style.display = 'block';
+      tampilkanPertanyaan();
+    }
+
+    function tampilkanPertanyaan() {
+      if (indeks >= soal.length) {
+        document.getElementById('soal').textContent = '✅ Kuis selesai!';
+        document.getElementById('jawaban').style.display = 'none';
+        document.querySelector('#kuis-box button').style.display = 'none';
+        rekap[namaPeserta] = skor;
+        localStorage.setItem('rekapJawaban', JSON.stringify(rekap));
+        return;
+      }
+      document.getElementById('soal').textContent = soal[indeks].pertanyaan;
+      document.getElementById('jawaban').value = '';
+      document.getElementById('hasil').textContent = '';
+    }
+
+    function cekJawaban() {
+      const jwb = document.getElementById('jawaban').value.trim().toLowerCase();
+      const benar = soal[indeks].jawaban.trim().toLowerCase();
+      const hasil = document.getElementById('hasil');
+      if (jwb === benar) {
+        hasil.textContent = '✅ Benar!';
+        hasil.style.color = 'green';
+        skor++;
+      } else {
+        hasil.textContent = '❌ Salah.';
+        hasil.style.color = 'red';
+      }
+      indeks++;
+      setTimeout(tampilkanPertanyaan, 1000);
+    }
+
+    muatPeserta();
+  </script>
+</body>
+</html>
